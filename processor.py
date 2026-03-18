@@ -8,15 +8,21 @@ class TextProcessor:
         self.nlp = spacy.load(language_model)
 
     def extract_top_keywords(self, cleaned_texts, top_n=10):
-            """
-            Extrae las palabras más importantes de un conjunto de textos limpios 
-            utilizando TfidfVectorizer.
-            
-            :param cleaned_texts: Lista de textos limpios.
-            :param top_n: Número de palabras clave a extraer.
-            :return: Lista de listas con las palabras clave más importantes por texto.
-            """
-            vectorizer = TfidfVectorizer()
+        """
+        Extrae las palabras más importantes de un conjunto de textos limpios 
+        utilizando TfidfVectorizer.
+        
+        :param cleaned_texts: Lista de textos limpios.
+        :param top_n: Número de palabras clave a extraer.
+        :return: Lista de listas con las palabras clave más importantes por texto.
+        """
+        # Configurar el vectorizador para ignorar palabras comunes y limitar el vocabulario
+        vectorizer = TfidfVectorizer(
+            stop_words="english",  # Eliminar stop-words en inglés
+            max_features=1000,    # Limitar el vocabulario a las 1000 palabras más relevantes
+            min_df=2              # Ignorar palabras que aparecen en menos de 2 documentos
+        )
+        try:
             tfidf_matrix = vectorizer.fit_transform(cleaned_texts)
             feature_names = np.array(vectorizer.get_feature_names_out())
             
@@ -27,7 +33,10 @@ class TextProcessor:
                 top_keywords.append(top_features.tolist())
             
             return top_keywords
-    
+        except ValueError:
+            # Manejar el caso de textos vacíos o sin vocabulario válido
+            return [["No keywords found"] for _ in cleaned_texts]
+
     def clean_texts(self, texts):
         """
         Limpia una lista de textos eliminando stop-words, puntuación, 
@@ -38,10 +47,13 @@ class TextProcessor:
         """
         cleaned_texts = []
         for text in texts:
+            if not text.strip():  # Ignorar textos vacíos
+                cleaned_texts.append("")
+                continue
             doc = self.nlp(text)
             cleaned = [
                 token.lemma_ for token in doc
-                if not token.is_stop and not token.is_punct and not token.is_space
+                if not token.is_stop and not token.is_punct and not token.is_space and len(token) > 2
             ]
             cleaned_texts.append(" ".join(cleaned).lower())
         return cleaned_texts
