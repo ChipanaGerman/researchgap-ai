@@ -2,12 +2,11 @@ from data_fetcher import search_papers, convert_abstract_inverted_index_to_text
 from processor import TextProcessor
 from clusterer import ResearchClusterer
 
-def main():
+def main(tema, num_papers, num_clusters):
     # 1. Buscar papers sobre un tema
-    tema = "Artificial Intelligence in Mental Health"
     print(f"Buscando papers sobre: {tema}...")
     try:
-        papers = search_papers(tema)
+        papers = search_papers(tema, per_page=num_papers)
         if not papers:
             print("No se encontraron papers para el tema especificado.")
             return
@@ -44,7 +43,7 @@ def main():
     # 5. Clustering
     print("\nAgrupando investigaciones por similitud temática...")
     try:
-        clusterer = ResearchClusterer(n_clusters=5)
+        clusterer = ResearchClusterer(n_clusters=num_clusters)
         labels = clusterer.cluster_abstracts(cleaned_abstracts)
     except Exception as e:
         print(f"Error durante el clustering: {e}")
@@ -59,7 +58,7 @@ def main():
 
     # 7. Mostrar resultados por grupos
     print("\nResultados del clustering:")
-    for cluster_id in range(5):  # Mostrar qué hay en cada cluster
+    for cluster_id in range(num_clusters):  # Mostrar qué hay en cada cluster
         print(f"\n--- CLUSTER {cluster_id} ---")
         print(f"Tema principal: {', '.join(cluster_topics[cluster_id])}")
         cluster_papers = [papers[i]['title'] for i in range(len(labels)) if labels[i] == cluster_id]
@@ -85,4 +84,5 @@ def main():
         print(f"Estado: {gap['status']}")
 
 if __name__ == "__main__":
-    main()
+    # Valores predeterminados para pruebas locales
+    main("Artificial Intelligence in Mental Health", 20, 5)

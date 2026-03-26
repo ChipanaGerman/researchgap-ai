@@ -22,12 +22,15 @@ def search_papers(keyword, per_page=10, max_results=100):
     
     :param keyword: Palabra clave para buscar en los títulos de los artículos.
     :param per_page: Número de resultados por página (por defecto, 10).
-    :param max_results: Número máximo de resultados a obtener (por defecto, 50).
+    :param max_results: Número máximo de resultados a obtener (por defecto, 100).
     :return: Lista de diccionarios con información de los artículos.
     """
     base_url = "https://api.openalex.org/works"
     papers = []
     page = 1  # Página inicial
+
+    # Ajustar max_results dinámicamente si es menor que per_page
+    max_results = min(max_results, per_page)
 
     while len(papers) < max_results:
         params = {
