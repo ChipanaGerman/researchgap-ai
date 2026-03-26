@@ -1,6 +1,7 @@
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+import re
 
 class TextProcessor:
     def __init__(self, language_model="en_core_web_sm"):
@@ -39,21 +40,31 @@ class TextProcessor:
 
     def clean_texts(self, texts):
         """
-        Limpia una lista de textos eliminando stop-words, puntuación, 
-        convirtiendo a minúsculas y aplicando lematización.
+        Limpia una lista de textos eliminando stop-words, puntuación, números,
+        palabras irrelevantes y aplicando lematización.
         
         :param texts: Lista de textos (abstracts) a limpiar.
-        :return: Lista de textos limpios.
+        :return: Lista de textos limpios y una lista de índices de abstracts válidos.
         """
         cleaned_texts = []
-        for text in texts:
+        valid_indices = []  # Lista para rastrear los índices de abstracts válidos
+        for i, text in enumerate(texts):
             if not text.strip():  # Ignorar textos vacíos
-                cleaned_texts.append("")
+                cleaned_texts.append("No abstract available")
                 continue
             doc = self.nlp(text)
             cleaned = [
                 token.lemma_ for token in doc
-                if not token.is_stop and not token.is_punct and not token.is_space and len(token) > 2
+                if not token.is_stop  # Eliminar stop-words
+                and not token.is_punct  # Eliminar puntuación
+                and not token.is_space  # Eliminar espacios
+                and not token.like_num  # Eliminar números
+                and len(token) > 2  # Ignorar palabras muy cortas
+                and re.match(r"^[a-zA-Z]+$", token.text)  # Solo palabras alfabéticas
             ]
-            cleaned_texts.append(" ".join(cleaned).lower())
-        return cleaned_texts
+            if cleaned:
+                cleaned_texts.append(" ".join(cleaned).lower())
+                valid_indices.append(i)  # Guardar el índice del abstract válido
+            else:
+                cleaned_texts.append("No abstract available")
+        return cleaned_texts, valid_indices

@@ -17,14 +17,18 @@ def main():
 
     # 2. Procesar los abstracts
     processor = TextProcessor()
-    abstracts = [convert_abstract_inverted_index_to_text(p['abstract']) for p in papers]
-    cleaned_abstracts = processor.clean_texts(abstracts)
+    abstracts = [convert_abstract_inverted_index_to_text(paper['abstract']) for paper in papers]
+    cleaned_abstracts, valid_indices = processor.clean_texts(abstracts)
 
-    if not any(cleaned_abstracts):
-        print("Error: No hay abstracts válidos después de la limpieza.")
+    # Filtrar artículos problemáticos
+    papers = [papers[i] for i in valid_indices]
+    cleaned_abstracts = [cleaned_abstracts[i] for i in valid_indices]
+
+    if not papers:
+        print("Error: No hay artículos válidos después de la limpieza.")
         return
 
-    # 3. Mostrar resultados limpios y extraer palabras clave
+    # Continuar con el análisis
     print("\nResultados de la búsqueda:")
     for i, p in enumerate(papers):
         print(f"\nTítulo: {p['title']}")
@@ -61,6 +65,24 @@ def main():
         cluster_papers = [papers[i]['title'] for i in range(len(labels)) if labels[i] == cluster_id]
         for title in cluster_papers:
             print(f" - {title}")
+
+    # 8. Analizar Gaps de Investigación
+    print("\n" + "="*30)
+    print(" ANALIZADOR DE VACÍOS (GAPS) ")
+    print("="*30)
+    
+    import pandas as pd
+    from gap_analyzer import GapAnalyzer
+    
+    # Creamos un pequeño dataframe para el análisis
+    df_results = pd.DataFrame({'cluster': labels})
+    analyzer = GapAnalyzer()
+    gaps = analyzer.analyze_gaps(df_results, cluster_topics)
+    
+    for gap in gaps:
+        print(f"\nTemas: {gap['topics']}")
+        print(f"Cantidad de papers: {gap['count']}")
+        print(f"Estado: {gap['status']}")
 
 if __name__ == "__main__":
     main()

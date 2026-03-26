@@ -16,7 +16,7 @@ def convert_abstract_inverted_index_to_text(abstract_inverted_index):
     words.sort()  # Ordenar por posición
     return " ".join(word for _, word in words)
 
-def search_papers(keyword, per_page=10, max_results=20):
+def search_papers(keyword, per_page=10, max_results=100):
     """
     Busca artículos en la API de OpenAlex utilizando una palabra clave.
     
