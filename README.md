@@ -71,8 +71,8 @@ To run the project locally, follow these steps:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo-link/ResearchGap-AI.git
-   cd ResearchGap-AI
+   git clone https://github.com/ChipanaGerman/researchgap-ai.git
+   cd researchgap-ai
    ```
 
 2. **Install dependencies**:
@@ -133,27 +133,6 @@ The user specifies:
 ### Output
 - A detailed analysis of research gaps, including cluster summaries and their status.
 - An interactive 2D knowledge map for visual exploration of the research landscape.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! If you'd like to improve this project, please follow these steps:
-
-1. Fork the repository  
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add your message"
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-5. Open a pull request  
 
 ---
 
