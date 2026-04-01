@@ -2,87 +2,94 @@ from data_fetcher import search_papers, convert_abstract_inverted_index_to_text
 from processor import TextProcessor
 from clusterer import ResearchClusterer
 
-def main(tema, num_papers, num_clusters):
-    # 1. Buscar papers sobre un tema
-    print(f"Buscando papers sobre: {tema}...")
+def main(topic, num_papers, num_clusters):
+    """
+    Main function to analyze research papers on a given topic.
+    
+    :param topic: The research topic to search for.
+    :param num_papers: Number of papers to analyze.
+    :param num_clusters: Number of clusters to create.
+    """
+    # 1. Search for papers on the given topic
+    print(f"Searching for papers on: {topic}...")
     try:
-        papers = search_papers(tema, per_page=num_papers)
+        papers = search_papers(topic, per_page=num_papers)
         if not papers:
-            print("No se encontraron papers para el tema especificado.")
+            print("No papers found for the specified topic.")
             return
     except Exception as e:
-        print(f"Error al buscar papers: {e}")
+        print(f"Error while searching for papers: {e}")
         return
 
-    # 2. Procesar los abstracts
+    # 2. Process abstracts
     processor = TextProcessor()
     abstracts = [convert_abstract_inverted_index_to_text(paper['abstract']) for paper in papers]
     cleaned_abstracts, valid_indices = processor.clean_texts(abstracts)
 
-    # Filtrar artículos problemáticos
+    # Filter problematic articles
     papers = [papers[i] for i in valid_indices]
     cleaned_abstracts = [cleaned_abstracts[i] for i in valid_indices]
 
     if not papers:
-        print("Error: No hay artículos válidos después de la limpieza.")
+        print("Error: No valid articles after cleaning.")
         return
 
-    # Continuar con el análisis
-    print("\nResultados de la búsqueda:")
+    # Continue with the analysis
+    print("\nSearch results:")
     for i, p in enumerate(papers):
-        print(f"\nTítulo: {p['title']}")
-        print(f"Año: {p['year']}")
-        print(f"Abstract limpio: {cleaned_abstracts[i]}")
+        print(f"\nTitle: {p['title']}")
+        print(f"Year: {p['year']}")
+        print(f"Cleaned Abstract: {cleaned_abstracts[i]}")
 
-    # 4. Extraer palabras clave principales
-    print("\nExtrayendo palabras clave principales...")
+    # 4. Extract main keywords
+    print("\nExtracting main keywords...")
     top_keywords = processor.extract_top_keywords(cleaned_abstracts, top_n=5)
     for i, keywords in enumerate(top_keywords):
-        print(f"\nPalabras clave del artículo '{papers[i]['title']}': {', '.join(keywords)}")
+        print(f"\nKeywords for the article '{papers[i]['title']}': {', '.join(keywords)}")
 
-    # 5. Clustering
-    print("\nAgrupando investigaciones por similitud temática...")
+    # 5. Perform clustering
+    print("\nClustering research papers by thematic similarity...")
     try:
         clusterer = ResearchClusterer(n_clusters=num_clusters)
         labels = clusterer.cluster_abstracts(cleaned_abstracts)
     except Exception as e:
-        print(f"Error durante el clustering: {e}")
+        print(f"Error during clustering: {e}")
         return
 
-    # 6. Identificar temas principales de los clusters
+    # 6. Identify main topics for each cluster
     try:
         cluster_topics = clusterer.identify_cluster_topics(cleaned_abstracts, labels)
     except Exception as e:
-        print(f"Error al identificar los temas principales de los clusters: {e}")
+        print(f"Error while identifying main topics for clusters: {e}")
         return
 
-    # 7. Mostrar resultados por grupos
-    print("\nResultados del clustering:")
-    for cluster_id in range(num_clusters):  # Mostrar qué hay en cada cluster
+    # 7. Display clustering results
+    print("\nClustering results:")
+    for cluster_id in range(num_clusters):  # Display the content of each cluster
         print(f"\n--- CLUSTER {cluster_id} ---")
-        print(f"Tema principal: {', '.join(cluster_topics[cluster_id])}")
+        print(f"Main Topic: {', '.join(cluster_topics[cluster_id])}")
         cluster_papers = [papers[i]['title'] for i in range(len(labels)) if labels[i] == cluster_id]
         for title in cluster_papers:
             print(f" - {title}")
 
-    # 8. Analizar Gaps de Investigación
+    # 8. Analyze research gaps
     print("\n" + "="*30)
-    print(" ANALIZADOR DE VACÍOS (GAPS) ")
+    print(" RESEARCH GAP ANALYZER ")
     print("="*30)
     
     import pandas as pd
     from gap_analyzer import GapAnalyzer
     
-    # Creamos un pequeño dataframe para el análisis
+    # Create a small DataFrame for analysis
     df_results = pd.DataFrame({'cluster': labels})
     analyzer = GapAnalyzer()
     gaps = analyzer.analyze_gaps(df_results, cluster_topics)
     
     for gap in gaps:
-        print(f"\nTemas: {gap['topics']}")
-        print(f"Cantidad de papers: {gap['count']}")
-        print(f"Estado: {gap['status']}")
+        print(f"\nTopics: {gap['topics']}")
+        print(f"Number of papers: {gap['count']}")
+        print(f"Status: {gap['status']}")
 
 if __name__ == "__main__":
-    # Valores predeterminados para pruebas locales
+    # Default values for local testing
     main("Artificial Intelligence in Mental Health", 20, 5)

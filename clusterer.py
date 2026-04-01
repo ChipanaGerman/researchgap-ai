@@ -6,28 +6,28 @@ import numpy as np
 class ResearchClusterer:
     def __init__(self, model_name="all-MiniLM-L6-v2", n_clusters=5):
         """
-        Inicializa el modelo de embeddings y el número de clusters.
+        Initializes the embedding model and the number of clusters.
         
-        :param model_name: Nombre del modelo de SentenceTransformer.
-        :param n_clusters: Número de clusters para KMeans.
+        :param model_name: Name of the SentenceTransformer model.
+        :param n_clusters: Number of clusters for KMeans.
         """
         self.model = SentenceTransformer(model_name)
         self.n_clusters = n_clusters
 
     def cluster_abstracts(self, abstracts):
         """
-        Convierte los abstracts en embeddings y los agrupa en clusters.
+        Converts abstracts into embeddings and clusters them using KMeans.
         
-        :param abstracts: Lista de abstracts.
-        :return: Lista de etiquetas de clusters para cada abstract.
+        :param abstracts: List of abstracts.
+        :return: List of cluster labels for each abstract.
         """
         if not abstracts or not any(abstracts):
-            raise ValueError("La lista de abstracts está vacía o no contiene textos válidos.")
+            raise ValueError("The list of abstracts is empty or contains no valid texts.")
         
-        # Generar embeddings
+        # Generate embeddings
         embeddings = self.model.encode(abstracts)
         
-        # Agrupar con KMeans
+        # Perform clustering with KMeans
         kmeans = KMeans(n_clusters=self.n_clusters, random_state=42)
         labels = kmeans.fit_predict(embeddings)
         
@@ -35,9 +35,17 @@ class ResearchClusterer:
         return labels
 
     def identify_cluster_topics(self, abstracts, labels):
-        if not abstracts or labels is None:
-            raise ValueError("Los abstracts o las etiquetas están vacíos.")
+        """
+        Identifies the main topics for each cluster based on the abstracts.
         
+        :param abstracts: List of abstracts.
+        :param labels: List of cluster labels for each abstract.
+        :return: Dictionary mapping each cluster to its main topics.
+        """
+        if not abstracts or labels is None:
+            raise ValueError("Abstracts or labels are empty.")
+        
+        # Group abstracts by cluster
         cluster_texts = {i: [] for i in range(self.n_clusters)}
         for abstract, label in zip(abstracts, labels):
             if abstract.strip():
@@ -49,19 +57,19 @@ class ResearchClusterer:
                 cluster_topics[cluster] = ["No topics found"]
                 continue
             
-            # Usamos TfidfVectorizer para encontrar palabras únicas de este cluster
+            # Use TfidfVectorizer to find unique words for this cluster
             vectorizer = TfidfVectorizer(stop_words="english", max_features=10)
             try:
                 tfidf_matrix = vectorizer.fit_transform(texts)
                 feature_names = vectorizer.get_feature_names_out()
                 
-                # Sumamos los scores de TF-IDF para cada palabra
+                # Sum TF-IDF scores for each word
                 sums = tfidf_matrix.sum(axis=0)
                 data = []
                 for col, term in enumerate(feature_names):
                     data.append((term, sums[0, col]))
                 
-                # Ordenamos y sacamos las 5 mejores
+                # Sort and select the top 5 words
                 ranking = sorted(data, key=lambda x: x[1], reverse=True)
                 cluster_topics[cluster] = [t[0] for t in ranking[:5]]
             except:

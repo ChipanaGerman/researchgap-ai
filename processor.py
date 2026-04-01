@@ -5,23 +5,26 @@ import re
 
 class TextProcessor:
     def __init__(self, language_model="en_core_web_sm"):
-        # Cargar el modelo de spaCy
+        """
+        Initializes the spaCy language model for text processing.
+        
+        :param language_model: Name of the spaCy language model to load.
+        """
         self.nlp = spacy.load(language_model)
 
     def extract_top_keywords(self, cleaned_texts, top_n=10):
         """
-        Extrae las palabras más importantes de un conjunto de textos limpios 
-        utilizando TfidfVectorizer.
+        Extracts the most important keywords from a set of cleaned texts using TfidfVectorizer.
         
-        :param cleaned_texts: Lista de textos limpios.
-        :param top_n: Número de palabras clave a extraer.
-        :return: Lista de listas con las palabras clave más importantes por texto.
+        :param cleaned_texts: List of cleaned texts.
+        :param top_n: Number of keywords to extract per text.
+        :return: List of lists containing the most important keywords for each text.
         """
-        # Configurar el vectorizador para ignorar palabras comunes y limitar el vocabulario
+        # Configure the vectorizer to ignore common words and limit the vocabulary
         vectorizer = TfidfVectorizer(
-            stop_words="english",  # Eliminar stop-words en inglés
-            max_features=1000,    # Limitar el vocabulario a las 1000 palabras más relevantes
-            min_df=2              # Ignorar palabras que aparecen en menos de 2 documentos
+            stop_words="english",  # Remove English stop-words
+            max_features=1000,    # Limit the vocabulary to the 1000 most relevant words
+            min_df=2              # Ignore words that appear in fewer than 2 documents
         )
         try:
             tfidf_matrix = vectorizer.fit_transform(cleaned_texts)
@@ -35,36 +38,36 @@ class TextProcessor:
             
             return top_keywords
         except ValueError:
-            # Manejar el caso de textos vacíos o sin vocabulario válido
+            # Handle the case of empty texts or invalid vocabulary
             return [["No keywords found"] for _ in cleaned_texts]
 
     def clean_texts(self, texts):
         """
-        Limpia una lista de textos eliminando stop-words, puntuación, números,
-        palabras irrelevantes y aplicando lematización.
+        Cleans a list of texts by removing stop-words, punctuation, numbers,
+        irrelevant words, and applying lemmatization.
         
-        :param texts: Lista de textos (abstracts) a limpiar.
-        :return: Lista de textos limpios y una lista de índices de abstracts válidos.
+        :param texts: List of texts (abstracts) to clean.
+        :return: List of cleaned texts and a list of valid abstract indices.
         """
         cleaned_texts = []
-        valid_indices = []  # Lista para rastrear los índices de abstracts válidos
+        valid_indices = []  # List to track indices of valid abstracts
         for i, text in enumerate(texts):
-            if not text.strip():  # Ignorar textos vacíos
+            if not text.strip():  # Ignore empty texts
                 cleaned_texts.append("No abstract available")
                 continue
             doc = self.nlp(text)
             cleaned = [
                 token.lemma_ for token in doc
-                if not token.is_stop  # Eliminar stop-words
-                and not token.is_punct  # Eliminar puntuación
-                and not token.is_space  # Eliminar espacios
-                and not token.like_num  # Eliminar números
-                and len(token) > 2  # Ignorar palabras muy cortas
-                and re.match(r"^[a-zA-Z]+$", token.text)  # Solo palabras alfabéticas
+                if not token.is_stop  # Remove stop-words
+                and not token.is_punct  # Remove punctuation
+                and not token.is_space  # Remove spaces
+                and not token.like_num  # Remove numbers
+                and len(token) > 2  # Ignore very short words
+                and re.match(r"^[a-zA-Z]+$", token.text)  # Only alphabetic words
             ]
             if cleaned:
                 cleaned_texts.append(" ".join(cleaned).lower())
-                valid_indices.append(i)  # Guardar el índice del abstract válido
+                valid_indices.append(i)  # Save the index of the valid abstract
             else:
                 cleaned_texts.append("No abstract available")
         return cleaned_texts, valid_indices
